@@ -23,9 +23,8 @@ def jm(j):
     return np.diag(_jpcoeff(j, np.arange(-j, j)), k=-1)
 
 
-def j2(j):
-    """ Returns the j^2 matrix, J(J+1). """
-    return j * (j + 1) * np.eye(int(2 * j + 1))
+def ident(j):
+    return np.eye(int(2 * j + 1))
 
 
 def o_4_0(j):
@@ -33,8 +32,8 @@ def o_4_0(j):
     return (
         35 * matpow(jz(j), 4)
         - (30 * j * (j + 1) - 25) * matpow(jz(j), 2)
-        - 6 * j2(j)
-        + 3 * matpow(j2(j), 2)
+        - 6 * j * (j + 1) * ident(j)
+        + 3 * j ** 2 * (j + 1) ** 2 * ident(j)
     )
 
 
@@ -47,23 +46,19 @@ def o_6_0(j):
     """ Returns the o_6_0 matrix for a given angular momentum j."""
     return (
         231 * matpow(jz(j), 6)
-        - (105 * (3 * j * (j + 1)) - 7) * matpow(jz(j), 4)
-        + (105 * ((j * (j + 1)) ** 2) - 525 * j * (j + 1) + 294) * matpow(jz(j), 2)
-        - 5 * matpow(j2(j), 3)
-        + 40 * matpow(j2(j), 2)
-        - 60 * j2(j)
+        - 105 * (3 * j * (j + 1) - 7) * matpow(jz(j), 4)
+        + (105 * j ** 2 * (j + 1) ** 2 - 525 * j * (j + 1) + 294) * matpow(jz(j), 2)
+        - 5 * j ** 3 * (j + 1) ** 3 * ident(j)
+        + 40 * j ** 2 * (j + 1) ** 2 * ident(j)
+        - 60 * j * (j + 1) * ident(j)
     )
 
 
 def o_6_4(j):
     """ Returns the o_6_6 matrix for a given angular momentum j."""
-    return np.matmul(
-        0.25 * (11 * matpow(jz, 2) - j2(j) - 38 * np.eye(int(2 * j + 1))),
-        (matpow(jp, 4) + matpow(jm, 4)),
-    ) + np.matmul(
-        0.25 * (matpow(jp, 4) + matpow(jm, 4)),
-        (11 * matpow(jz, 2) - j2(j) - 38 * np.eye(int(2 * j + 1))),
-    )
+    t1 = 11 * matpow(jz(j), 2) - j * (j + 1) * ident(j) - 38 * ident(j)
+    t2 = matpow(jp(j), 4) + matpow(jm(j), 4)
+    return 0.25 * (t1 @ t2 + t2 @ t1)
 
 
 @lru_cache(maxsize=4)
@@ -83,4 +78,4 @@ def energies(j, W, x, f4=60, f6=13860):
     by the total angular momentum j, the scale parameter W, and the mixing
     parameter x.
     """
-    return W * np.linalg.eigvalh(x * get_o_4(j) / f4 + (1 - abs(x)) * get_o_6(j) / f6)
+    return W * np.linalg.eigvalsh(x * get_o_4(j) / f4 + (1 - abs(x)) * get_o_6(j) / f6)
